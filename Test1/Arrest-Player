@@ -1,0 +1,496 @@
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+local guiName = "ApexScripters_GUI_Pro"
+
+if CoreGui:FindFirstChild(guiName) then
+    CoreGui[guiName]:Destroy()
+end
+
+--Protección contra patadas
+pcall(function()
+    local mt = getrawmetatable(game)
+    local oldNamecall = mt.__namecall
+    if setreadonly then setreadonly(mt, false) end
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if not checkcaller() and (method == "Kick" or method == "kick") then
+            return nil
+        end
+        return oldNamecall(self, ...)
+    end)
+    if setreadonly then setreadonly(mt, true) end
+end)
+
+--Interfaz moderna
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = guiName
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+--FPS y ping
+local HudFrame = Instance.new("Frame", ScreenGui)
+HudFrame.Size = UDim2.new(0, 150, 0, 32)
+HudFrame.Position = UDim2.new(1, -160, 0, 15)
+HudFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+HudFrame.BackgroundTransparency = 0.2
+HudFrame.BorderSizePixel = 0
+Instance.new("UICorner", HudFrame).CornerRadius = UDim.new(0, 6)
+
+local HudGlow = Instance.new("UIStroke", HudFrame)
+HudGlow.Color = Color3.fromRGB(0, 255, 200)
+HudGlow.Thickness = 1.5
+
+local StatsText = Instance.new("TextLabel", HudFrame)
+StatsText.Size = UDim2.new(1, 0, 1, 0)
+StatsText.BackgroundTransparency = 1
+StatsText.Text = "FPS: ... | Ping: ..."
+StatsText.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatsText.Font = Enum.Font.GothamMedium
+StatsText.TextSize = 12
+
+--Menú principal
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 360, 0, 180)
+Main.Position = UDim2.new(0.5, -180, 0.5, -90)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Main.BackgroundTransparency = 0.1
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Color = Color3.fromRGB(45, 45, 55)
+MainStroke.Thickness = 2
+
+local Top = Instance.new("Frame", Main)
+Top.Size = UDim2.new(1, 0, 0, 45)
+Top.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+Top.BorderSizePixel = 0
+Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 12)
+
+local TopFix = Instance.new("Frame", Top)
+TopFix.Size = UDim2.new(1, 0, 0, 10)
+TopFix.Position = UDim2.new(0, 0, 1, -10)
+TopFix.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+TopFix.BorderSizePixel = 0
+
+local Title = Instance.new("TextLabel", Top)
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "APEX SCRIPTERS"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 14
+
+local MinBtn = Instance.new("TextButton", Top)
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -40, 0, 7)
+MinBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+MinBtn.Text = "-"
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
+
+local Content = Instance.new("Frame", Main)
+Content.Size = UDim2.new(1, 0, 1, -45)
+Content.Position = UDim2.new(0, 0, 0, 45)
+Content.BackgroundTransparency = 1
+
+local AutoArrestBtn = Instance.new("TextButton", Content)
+AutoArrestBtn.Size = UDim2.new(1, -30, 0, 42)
+AutoArrestBtn.Position = UDim2.new(0, 15, 0, 15)
+AutoArrestBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+AutoArrestBtn.Text = "AUTO PRENDER: DESLIGADO"
+AutoArrestBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+AutoArrestBtn.Font = Enum.Font.GothamBold
+AutoArrestBtn.TextSize = 12
+Instance.new("UICorner", AutoArrestBtn).CornerRadius = UDim.new(0, 8)
+local AutoStroke = Instance.new("UIStroke", AutoArrestBtn)
+AutoStroke.Color = Color3.fromRGB(255, 80, 80)
+AutoStroke.Thickness = 1.5
+
+local TargetBox = Instance.new("TextBox", Content)
+TargetBox.Size = UDim2.new(1, -150, 0, 42)
+TargetBox.Position = UDim2.new(0, 15, 0, 70)
+TargetBox.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+TargetBox.Text = ""
+TargetBox.PlaceholderText = " Nome do Alvo..."
+TargetBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TargetBox.Font = Enum.Font.Gotham
+TargetBox.TextSize = 12
+Instance.new("UICorner", TargetBox).CornerRadius = UDim.new(0, 8)
+
+local ArrestTargetBtn = Instance.new("TextButton", Content)
+ArrestTargetBtn.Size = UDim2.new(0, 115, 0, 42)
+ArrestTargetBtn.Position = UDim2.new(1, -130, 0, 70)
+ArrestTargetBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+ArrestTargetBtn.Text = "Caçar Alvo"
+ArrestTargetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ArrestTargetBtn.Font = Enum.Font.GothamBold
+ArrestTargetBtn.TextSize = 12
+Instance.new("UICorner", ArrestTargetBtn).CornerRadius = UDim.new(0, 8)
+
+--Guía arrastrable
+local function MakeDraggable(frame, dragPart)
+    local dragging, dragInput, dragStart, startPos
+    dragPart.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = input.Position; startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    dragPart.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+MakeDraggable(Main, Top)
+MakeDraggable(HudFrame, HudFrame)
+
+local isMinimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        Main:TweenSize(UDim2.new(0, 360, 0, 45), "Out", "Quad", 0.3, true)
+        MinBtn.Text = "+"
+        Content.Visible = false
+    else
+        Main:TweenSize(UDim2.new(0, 360, 0, 180), "Out", "Quad", 0.3, true)
+        MinBtn.Text = "-"
+        Content.Visible = true
+    end
+end)
+
+local frameCount, lastUpdate = 0, tick()
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local now = tick()
+    if now - lastUpdate >= 1 then
+        local ping = 0
+        pcall(function() ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+        StatsText.Text = string.format("FPS: %d  |  PING: %dms", frameCount, ping)
+        frameCount = 0
+        lastUpdate = now
+    end
+end)
+
+--Sistema inteligente de búsqueda de jugadores
+local DIVE_SPEED = 1000 
+local HUNT_SPEED = 60 
+local UNDERGROUND_Y = 20 -- Fica profundamente abaixo do mapa, imune a variações de montanhas
+
+local autoArrestActive = false
+local engineRunning = false
+local priorityTarget = nil
+local noclipConnection = nil
+local arrestedCooldown = {}
+
+--Armas que convierten a un recluso en un blanco
+local DANGER_ITEMS = {"M9", "Remington 870", "AK-47", "Hammer", "Crude Knife", "Riot Shield", "Knife"}
+
+local function ToggleNoclip(state)
+    if state then
+        if not noclipConnection then
+            noclipConnection = RunService.Stepped:Connect(function()
+                if LocalPlayer.Character then
+                    for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide = false end
+                    end
+                end
+            end)
+        end
+    else
+        if noclipConnection then noclipConnection:Disconnect(); noclipConnection = nil end
+    end
+end
+
+local function getRemotes()
+    local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+    return remotes and remotes:FindFirstChild("ArrestPlayer"), remotes and remotes:FindFirstChild("InteractWithItem")
+end
+
+local function equipCuffs()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChild("Humanoid")
+    if not hum then return end
+    
+    local cuffs = LocalPlayer.Backpack:FindFirstChild("Handcuffs") or char:FindFirstChild("Handcuffs")
+    if cuffs then 
+        hum:EquipTool(cuffs) 
+    end
+end
+
+--Sistema de detección: Criminales armados o reclusos
+local function isThreat(plr)
+    if not plr or not plr.Character then return false end
+    local hum = plr.Character:FindFirstChild("Humanoid")
+    if not hum or hum.Health <= 0 then return false end 
+    
+    --Si se trata de un jugador con antecedentes penales, se convierte en objetivo de inmediato. 
+    if plr.Team and string.lower(plr.Team.Name) == "criminals" then 
+        return true 
+    end
+    
+    --Si es un prisionero, compruebe si lleva un arma
+    if plr.Team and string.lower(plr.Team.Name) == "prisoners" then
+        local function hasWeapon(parent)
+            if not parent then return false end
+            for _, item in pairs(parent:GetChildren()) do
+                if item:IsA("Tool") and table.find(DANGER_ITEMS, item.Name) then
+                    return true
+                end
+            end
+            return false
+        end
+        
+        --Verificador de armas (almacenado o equipado)
+        if hasWeapon(plr.Character) or hasWeapon(plr:FindFirstChild("Backpack")) then
+            return true
+        end
+    end
+    
+    return false
+end
+
+local function getClosestTarget(pos)
+    local bestTarget = nil
+    local minDist = math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and isThreat(p) and not arrestedCooldown[p.UserId] then
+            local pHrp = p.Character:FindFirstChild("HumanoidRootPart")
+            if pHrp then
+                local dist = (pHrp.Position - pos).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    bestTarget = p
+                end
+            end
+        end
+    end
+    return bestTarget
+end
+
+local function startEngine()
+    if engineRunning then return end
+    engineRunning = true
+    
+    task.spawn(function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then engineRunning = false return end
+
+        local originalPos = hrp.Position
+        ToggleNoclip(true)
+        hrp.Anchored = false 
+
+        local proxy = Instance.new("Part")
+        proxy.Anchored = true
+        proxy.Transparency = 1
+        proxy.CanCollide = false
+        proxy.CFrame = hrp.CFrame
+        proxy.Parent = Workspace
+
+        --¡Sistema de placas artificiales!
+        local safePlate = Instance.new("Part")
+        safePlate.Size = Vector3.new(3, 0.05, 3) 
+        safePlate.Transparency = 0.2
+        safePlate.Color = Color3.fromRGB(0, 255, 200) -- Ciano/Verde Neon
+        safePlate.Material = Enum.Material.Neon
+        safePlate.CanCollide = false -- Impede conflito de física (impede o teleporte bugado)
+        safePlate.Anchored = true
+        safePlate.Parent = Workspace 
+
+        local updateConnection = RunService.Heartbeat:Connect(function()
+            if hrp and proxy then
+                hrp.CFrame = proxy.CFrame
+                hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                
+                --Actualización de la posición de la placa artificial
+                if safePlate and safePlate.Parent then
+                    safePlate.CFrame = proxy.CFrame * CFrame.new(0, -3.1, 0)
+                end
+            end
+        end)
+
+        --Baja la placa artificial a una altura segura (Y = 20)
+        local subPos = Vector3.new(originalPos.X, UNDERGROUND_Y, originalPos.Z)
+        while engineRunning and (proxy.Position - subPos).Magnitude > 2 do
+            local dir = (subPos - proxy.Position).Unit
+            proxy.CFrame = proxy.CFrame + (dir * DIVE_SPEED * RunService.Heartbeat:Wait())
+        end
+
+        --Bucle del jugador de prisión
+        while autoArrestActive or priorityTarget do
+            local currentTarget = priorityTarget
+            
+            if not currentTarget or not isThreat(currentTarget) then
+                priorityTarget = nil
+                currentTarget = getClosestTarget(proxy.Position)
+            end
+
+            if currentTarget then
+                local tChar = currentTarget.Character
+                local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                
+                if tHrp then
+                    --Cazar bajo tierra de forma horizontal
+                    while (autoArrestActive or priorityTarget) and isThreat(currentTarget) do
+                        local dest = Vector3.new(tHrp.Position.X, UNDERGROUND_Y, tHrp.Position.Z)
+                        local dist = (proxy.Position - dest).Magnitude
+                        if dist < 4 then break end 
+                        
+                        --El cambio de objetivo se produce si uno se acerca demasiado
+                        if not priorityTarget then
+                            local closer = getClosestTarget(proxy.Position)
+                            if closer and closer ~= currentTarget then
+                                local cHrp = closer.Character:FindFirstChild("HumanoidRootPart")
+                                if cHrp then
+                                    local cDist = (Vector3.new(cHrp.Position.X, UNDERGROUND_Y, cHrp.Position.Z) - proxy.Position).Magnitude
+                                    if cDist < dist - 20 then 
+                                        currentTarget = closer
+                                        tChar = currentTarget.Character
+                                        tHrp = cHrp
+                                    end
+                                end
+                            end
+                        end
+
+                        local dir = (dest - proxy.Position).Unit
+                        proxy.CFrame = proxy.CFrame + (dir * HUNT_SPEED * RunService.Heartbeat:Wait())
+                    end
+
+                    --Momento de la detención del jugador
+                    if isThreat(currentTarget) then
+                        local arrestR, interactR = getRemotes()
+                        
+                        --Jugador Esposado rápidamente 
+                        for i = 1, 12 do
+                            if not isThreat(currentTarget) then break end
+                            
+                            --Estar 6,5 bloques por debajo del objetivo
+                            proxy.CFrame = tHrp.CFrame * CFrame.new(0, -6.5, 0)
+                            
+                            equipCuffs() -- Força equipar rápido toda vez
+                            
+                            if arrestR then pcall(function() arrestR:InvokeServer(currentTarget, 1) end) end
+                            if interactR then pcall(function() interactR:InvokeServer(currentTarget) end) end
+                            
+                            task.wait(0.05) -- Muito mais rápido que antes
+                        end
+                        
+                        arrestedCooldown[currentTarget.UserId] = true
+                        task.delay(10, function() arrestedCooldown[currentTarget.UserId] = nil end)
+                        if priorityTarget == currentTarget then priorityTarget = nil end
+                        
+                        --Ir a Altura 20 Subterránea Sapidamente
+                        if tHrp then
+                            local hidePos = Vector3.new(tHrp.Position.X, UNDERGROUND_Y, tHrp.Position.Z)
+                            while (proxy.Position - hidePos).Magnitude > 2 do
+                                local dir = (hidePos - proxy.Position).Unit
+                                proxy.CFrame = proxy.CFrame + (dir * DIVE_SPEED * RunService.Heartbeat:Wait())
+                            end
+                        end
+                    end
+                end
+            else
+                task.wait(0.1) 
+            end
+        end
+
+        --Una vez finalizado el script, este devuelve al usuario a su posición anterior
+        local returnSubPos = Vector3.new(originalPos.X, UNDERGROUND_Y, originalPos.Z)
+        while (proxy.Position - returnSubPos).Magnitude > 2 do
+            local dir = (returnSubPos - proxy.Position).Unit
+            proxy.CFrame = proxy.CFrame + (dir * HUNT_SPEED * RunService.Heartbeat:Wait())
+        end
+        while (proxy.Position - originalPos).Magnitude > 2 do
+            local dir = (originalPos - proxy.Position).Unit
+            proxy.CFrame = proxy.CFrame + (dir * DIVE_SPEED * RunService.Heartbeat:Wait())
+        end
+        proxy.CFrame = CFrame.new(originalPos)
+
+        --Equipo de limpieza utilizado según el guion
+        updateConnection:Disconnect()
+        proxy:Destroy()
+        safePlate:Destroy()
+        hrp.Anchored = false
+        ToggleNoclip(false)
+        engineRunning = false
+    end)
+end
+
+--Regresar a la captura de objetivo después del reinicio
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if autoArrestActive then
+        char:WaitForChild("HumanoidRootPart")
+        task.wait(0.1) -- Tempo mínimo só pro mapa registrar você
+        if autoArrestActive and not engineRunning then
+            startEngine()
+        end
+    end
+end)
+
+--Evento del botón de script
+AutoArrestBtn.MouseButton1Click:Connect(function()
+    autoArrestActive = not autoArrestActive
+    if autoArrestActive then
+        AutoArrestBtn.Text = "AUTO PRENDER: LIGADO"
+        AutoStroke.Color = Color3.fromRGB(80, 255, 80)
+        AutoArrestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        if not engineRunning then startEngine() end
+    else
+        AutoArrestBtn.Text = "AUTO PRENDER: DESLIGADO"
+        AutoStroke.Color = Color3.fromRGB(255, 80, 80)
+        AutoArrestBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+ArrestTargetBtn.MouseButton1Click:Connect(function()
+    local targetName = string.lower(TargetBox.Text)
+    if targetName == "" then return end
+    for _, plr in pairs(Players:GetPlayers()) do
+        if string.find(string.lower(plr.Name), targetName) or string.find(string.lower(plr.DisplayName), targetName) then
+            priorityTarget = plr
+            if not engineRunning then startEngine() end
+            TargetBox.Text = ""
+            break 
+        end
+    end
+end)
+
+local Mouse = LocalPlayer:GetMouse()
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end 
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local target = Mouse.Target
+        if target then
+            local model = target:FindFirstAncestorOfClass("Model")
+            if model then
+                local player = Players:GetPlayerFromCharacter(model)
+                if player and player ~= LocalPlayer then
+                    priorityTarget = player
+                    if not engineRunning then startEngine() end
+                end
+            end
+        end
+    end
+end)
